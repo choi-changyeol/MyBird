@@ -10,6 +10,7 @@ namespace MyBird
         // Update is called once per frame
         void Update()
         {
+            if (GameManager.IsDeath) return;
             Move();
         }
         void Move()
