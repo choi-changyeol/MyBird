@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,15 +23,19 @@ namespace MyBird
         //회전 스피드
         [SerializeField] private float rotatespeed = 5f;
 
-        private float movespeed = 10f;
+        [SerializeField]private float movespeed = 10f;
 
         [SerializeField]private float readyBird = 1f;
-        private bool ready = false;
+
+        //게임 UI
+        public GameObject readyUI;
+        public GameObject GameOverUI;
         #endregion
 
         private void Start()
         {
             rb2D = GetComponent<Rigidbody2D>();
+            readyUI.SetActive(true);
         }
         private void Update()
         {
@@ -47,10 +52,11 @@ namespace MyBird
 
         }
         private void FixedUpdate()
-        {
+        {   
             //점프
             if (keyJump)
             {
+                MoveStartBrid();
                 Debug.Log("점프");
                 Jumpbird();
                 keyJump = false;
@@ -66,15 +72,11 @@ namespace MyBird
         {
             keyJump |= Input.GetKeyDown(KeyCode.Space);
             keyJump |= Input.GetMouseButtonDown(0);
-
-            if (GameManager.IsStart ==false && keyJump )
-            {
-                GameManager.IsStart = true;
-            }
         }
         //Bird 점프
         void Jumpbird()
         {
+            if (GameManager.IsDeath) return;
             //위쪽으로 힘을 주어 위쪽으로 이동
             //rb2D.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             rb2D.velocity = Vector2.up * jumpForce;
@@ -123,6 +125,49 @@ namespace MyBird
             if(rb2D.velocity.y < 0 && GameManager.IsStart == false)
             {
                 rb2D.velocity = Vector2.up * readyBird;
+            }
+        }
+        //버드 죽음 처리
+        void DeathBird()
+        {
+            if(GameManager.IsDeath)
+                return;
+            GameManager.IsDeath = true;
+            GameOverUI.SetActive(true);
+            //Debug.Log("죽음 처리");
+        }
+        //점수 획득
+        void GetPoint()
+        {
+            if (GameManager.IsDeath)
+                return;
+            //Debug.Log("점수 획득");
+            GameManager.Score++;
+        }
+
+        public void MoveStartBrid()
+        {
+            GameManager.IsStart = true;
+            readyUI.SetActive(false);
+        }
+        //버드 충돌 처리
+        private void OnTriggerEnter2D(Collider2D collider)
+        {
+            if (collider.tag == "Point")
+            {
+                GetPoint();
+            }
+            else if(collider.tag == "Pipe")
+            {
+                DeathBird();
+            }
+        }
+        //버드 그라운드 충돌 처리
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            if (collision.gameObject.tag == "Ground")
+            {
+                DeathBird();
             }
         }
     }
